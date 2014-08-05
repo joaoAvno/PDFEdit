@@ -25,7 +25,6 @@
      CGPDFDocumentRef pdf  = CGPDFDocumentCreateWithURL((CFURLRef)pathUrl);
     
     
-   // CGPDFDocumentRef pdf = CGPDFDocumentCreateWithURL((CFURLRef)[NSURL URLWithString:[self pathToPatientPhotoFolder]]);
     
     const size_t numberOfPages = CGPDFDocumentGetNumberOfPages(pdf);
     
