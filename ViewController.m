@@ -59,25 +59,7 @@
         [logo drawInRect:frame];
         
         
-        //Draw Text
-        NSString* textToDraw = @"Hello World";
-        CFStringRef stringRef = (__bridge CFStringRef)textToDraw;
-        
-        // Prepare the text using a Core Text Framesetter.
-        CFAttributedStringRef currentText = CFAttributedStringCreate(NULL, stringRef, NULL);
-        CTFramesetterRef framesetter = CTFramesetterCreateWithAttributedString(currentText);
-        CGRect frameRect = CGRectMake(0, 0, 100, 50);
-        CGMutablePathRef framePath = CGPathCreateMutable();
-        CGPathAddRect(framePath, NULL, frameRect);
-        
-        
-        
-        // Get the frame that will do the rendering.
-        CFRange currentRange = CFRangeMake(0, 0);
-        CTFrameRef frameRef = CTFramesetterCreateFrame(framesetter, currentRange, framePath, NULL);
-        CGPathRelease(framePath);
-        // Draw the frame.
-        CTFrameDraw(frameRef, ctx);
+        [self drawText:@"teste asdas das " inFrame:CGRectMake(200, 200, 80, 200)];
     }
     
     UIGraphicsEndPDFContext();
@@ -92,19 +74,41 @@
     [self showPDFFile];
 }
 
--(void)drawText
+-(void)drawText:(NSString*)textToDraw inFrame:(CGRect)frameRect
 {
-
-    NSString* pdfFileName = [NSString stringWithFormat:@"%@/101.pdf",[self pathToPatientPhotoFolder]];
     
-    NSString* textToDraw = @"Hello World";
     CFStringRef stringRef = (__bridge CFStringRef)textToDraw;
+    // Prepare the text using a Core Text Framesetter
     
-    // Prepare the text using a Core Text Framesetter.
-    CFAttributedStringRef currentText = CFAttributedStringCreate(NULL, stringRef, NULL);
-    CTFramesetterRef framesetter = CTFramesetterCreateWithAttributedString(currentText);
     
-    CGRect frameRect = CGRectMake(0, 0, 300, 50);
+    CGColorRef color = [UIColor blueColor].CGColor; // Set Color
+    
+    CTFontRef font = CTFontCreateWithName((CFStringRef) @"Systemfont", 50.0, NULL); // Set Custom Font
+    
+    CTTextAlignment theAlignment = kCTCenterTextAlignment; // Set custom Aligment
+    
+    CFIndex theNumberOfSettings = 1;
+    CTParagraphStyleSetting theSettings[1] = {
+        { kCTParagraphStyleSpecifierAlignment, sizeof(CTTextAlignment),
+            &theAlignment }
+    };
+    
+    CTParagraphStyleRef paragraphStyle = CTParagraphStyleCreate(theSettings, theNumberOfSettings);
+
+    NSDictionary *attributesDict = [NSDictionary dictionaryWithObjectsAndKeys:
+                                    (__bridge id)font, (NSString *)kCTFontAttributeName,color,
+                                    (NSString *)kCTForegroundColorAttributeName,paragraphStyle,
+                                    (NSString *) kCTParagraphStyleAttributeName,nil]; // atributes Dic
+
+    
+    
+    
+    NSAttributedString* stringToDraw = [[NSAttributedString alloc] initWithString:textToDraw attributes:attributesDict];
+    CTFramesetterRef framesetter = CTFramesetterCreateWithAttributedString((CFAttributedStringRef)stringToDraw);
+
+
+    
+    
     CGMutablePathRef framePath = CGPathCreateMutable();
     CGPathAddRect(framePath, NULL, frameRect);
     
@@ -113,34 +117,29 @@
     CTFrameRef frameRef = CTFramesetterCreateFrame(framesetter, currentRange, framePath, NULL);
     CGPathRelease(framePath);
     
-    // Create the PDF context using the default page size of 612 x 792.
-    UIGraphicsBeginPDFContextToFile(pdfFileName, CGRectZero, nil);
-    
-    // Mark the beginning of a new page.
-    UIGraphicsBeginPDFPageWithInfo(CGRectMake(0, 0, 612, 792), nil);
-    
     // Get the graphics context.
-    CGContextRef currentContext = UIGraphicsGetCurrentContext();
+    CGContextRef    currentContext = UIGraphicsGetCurrentContext();
     
     // Put the text matrix into a known state. This ensures
     // that no old scaling factors are left in place.
     CGContextSetTextMatrix(currentContext, CGAffineTransformIdentity);
     
+    
     // Core Text draws from the bottom-left corner up, so flip
     // the current transform prior to drawing.
-    CGContextTranslateCTM(currentContext, 0, 100);
+    CGContextTranslateCTM(currentContext, 0, frameRect.origin.y*2);
     CGContextScaleCTM(currentContext, 1.0, -1.0);
     
     // Draw the frame.
     CTFrameDraw(frameRef, currentContext);
     
+    CGContextScaleCTM(currentContext, 1.0, -1.0);
+    CGContextTranslateCTM(currentContext, 0, (-1)*frameRect.origin.y*2);
+    
+    
     CFRelease(frameRef);
     CFRelease(stringRef);
     CFRelease(framesetter);
-    
-    // Close the PDF context and write the contents out.
-    UIGraphicsEndPDFContext();
-    
 }
 
 
@@ -149,7 +148,7 @@
 {
     NSString* pdfFileName = [NSString stringWithFormat:@"%@/101.pdf",[self pathToPatientPhotoFolder]];
     
-    UIWebView* webView = [[UIWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 480)];
+    UIWebView* webView = [[UIWebView alloc] initWithFrame:CGRectMake(0, 0, 768, 1024)];
     
     NSURL *url = [NSURL fileURLWithPath:pdfFileName];
     NSURLRequest *request = [NSURLRequest requestWithURL:url];
